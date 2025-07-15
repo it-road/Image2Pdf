@@ -1,14 +1,16 @@
-﻿using PdfSharp.Drawing;
-using PdfSharp.Pdf;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using static System.Net.Mime.MediaTypeNames;
+using System.Collections.Generic;        // Required for IComparer<T>
+using System.Runtime.InteropServices;   // Required for DllImport
+using System.Text;                      // Required for Encoding
+using PdfSharp.Drawing;                 // Required for XImage, XGraphics
+using PdfSharp.Pdf;                     // Required for PdfDocument, PdfPage
 
 namespace Image2Pdf
 {
+    // Provides a natural sorting comparison that matches Windows File Explorer.
+    // This comparer uses the Windows API function StrCmpLogicalW.
     public class NaturalStringComparer : IComparer<string>
     {
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
@@ -24,8 +26,14 @@ namespace Image2Pdf
     {
         static void Main(string[] args)
         {
+            // Set console encoding to UTF-8 to support non-ASCII characters in file paths.
+            Console.InputEncoding = System.Text.Encoding.UTF8;
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+            // --- Title Changed as Requested ---
             Console.WriteLine("--- Image to PDF Converter ---");
 
+            // Get the image folder path
             string imageFolderPath;
             while (true)
             {
@@ -38,19 +46,18 @@ namespace Image2Pdf
                 Console.WriteLine("Error: The specified folder was not found. Please try again.");
             }
 
+            // Get the output PDF file path (optional)
             Console.Write("Enter the output PDF filename or full path (optional, defaults to 'output.pdf' in the source folder): ");
             string userInputPdfPath = Console.ReadLine();
 
             string outputPdfPath;
 
-            // *** MODIFICATION START ***
             // If the user did not enter a path, use the default logic.
             if (string.IsNullOrWhiteSpace(userInputPdfPath))
             {
-                // Call the new helper function to find a unique name.
+                // Call the helper function to find a unique name.
                 outputPdfPath = GetUniquePdfPath(imageFolderPath, "output", ".pdf");
             }
-            // *** MODIFICATION END ***
             else
             {
                 if (Path.IsPathRooted(userInputPdfPath))
@@ -63,15 +70,17 @@ namespace Image2Pdf
                 }
             }
 
+            // Ensure the file has a .pdf extension
             if (!Path.GetExtension(outputPdfPath).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
             {
                 outputPdfPath = Path.ChangeExtension(outputPdfPath, ".pdf");
             }
 
+            // Get all image files and sort them naturally
             string[] supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
             var imageFiles = Directory.GetFiles(imageFolderPath)
                                       .Where(f => supportedExtensions.Contains(Path.GetExtension(f).ToLower()))
-                                      .OrderBy(f => f, new NaturalStringComparer())
+                                      .OrderBy(f => f, new NaturalStringComparer()) // Use the natural sorter
                                       .ToArray();
 
             if (imageFiles.Length == 0)
@@ -86,6 +95,7 @@ namespace Image2Pdf
 
             try
             {
+                // Create the PDF document
                 string outputDirectory = Path.GetDirectoryName(outputPdfPath);
                 if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
                 {
@@ -103,12 +113,14 @@ namespace Image2Pdf
                         {
                             using (XImage image = XImage.FromFile(imageFile))
                             {
+                                // Add a new page for each image
                                 PdfPage page = document.AddPage();
                                 page.Width = image.PointWidth;
                                 page.Height = image.PointHeight;
 
                                 XGraphics gfx = XGraphics.FromPdfPage(page);
                                 gfx.DrawImage(image, 0, 0, page.Width, page.Height);
+
                                 Console.WriteLine($"Processed: {Path.GetFileName(imageFile)}");
                             }
                         }
@@ -118,6 +130,7 @@ namespace Image2Pdf
                         }
                     }
 
+                    // Save the PDF file
                     document.Save(outputPdfPath);
                 }
 
