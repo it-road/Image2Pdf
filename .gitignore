@@ -1,0 +1,77 @@
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2019 cache/options
+.vs/
+# Leave .vs/config/applicationhost.config for IIS Express
+!.vs/config/applicationhost.config
+
+# Nuget packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+
+# Publish results
+[Pp]ublish/
+[Pp]ublishProfiles/
+**/[Oo]utput/
+
+# Dotnet generated files
+*.pfx
+*.key
+*.exe
+*.dll
+
+# Secrets
+secrets.json
+appsettings.Development.json
+
+# Tooling
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings
+*.DotSettings.user
+
+# Mac/Linux/Windows Files
+.DS_Store
+Thumbs.db
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.[Tt]est[Ll]og
+*.VisualState.xml
+TestResult.xml
+nunit-result.xml
+
+# Code Analysis
+StyleCop.Cache
