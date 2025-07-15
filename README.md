@@ -1,7 +1,13 @@
+# Image2Pdf Console Converter
+
+A simple yet powerful C# console application to convert a folder of images, **now including WebP**, into a single, sorted PDF file.
+
+This tool is designed for ease of use. It interactively prompts the user for necessary information and uses a "natural sort" algorithm to ensure that files like `image1.jpg`, `image2.jpg`, `image10.jpg` are ordered correctly, just as they appear in Windows File Explorer.
+
 ## Features
 
 -   **Batch Conversion**: Converts all supported images from a specified folder.
--   **Multiple Image Formats**: Supports common formats like `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, and `.tiff`.
+-   **Wide Image Format Support**: Supports common formats like `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`, `.tiff`, `.webp`.
 -   **Natural Sorting**: Automatically sorts images by filename using the same logic as Windows File Explorer before conversion.
 -   **Flexible Output**: Allows the user to specify a full output path, a filename only (saving in the source folder), or use a default.
 -   **Conflict Avoidance**: If the default `output.pdf` already exists, it automatically creates a new file named `output (1).pdf`, `output (2).pdf`, and so on, to avoid overwriting existing files.

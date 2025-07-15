@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;   // Required for DllImport
 using System.Text;                      // Required for Encoding
 using PdfSharp.Drawing;                 // Required for XImage, XGraphics
 using PdfSharp.Pdf;                     // Required for PdfDocument, PdfPage
+using SkiaSharp;                        // *** NEW: Required for WebP support ***
 
 namespace Image2Pdf
 {
@@ -30,7 +31,6 @@ namespace Image2Pdf
             Console.InputEncoding = System.Text.Encoding.UTF8;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            // --- Title Changed as Requested ---
             Console.WriteLine("--- Image to PDF Converter ---");
 
             // Get the image folder path
@@ -55,7 +55,6 @@ namespace Image2Pdf
             // If the user did not enter a path, use the default logic.
             if (string.IsNullOrWhiteSpace(userInputPdfPath))
             {
-                // Call the helper function to find a unique name.
                 outputPdfPath = GetUniquePdfPath(imageFolderPath, "output", ".pdf");
             }
             else
@@ -70,17 +69,17 @@ namespace Image2Pdf
                 }
             }
 
-            // Ensure the file has a .pdf extension
             if (!Path.GetExtension(outputPdfPath).Equals(".pdf", StringComparison.OrdinalIgnoreCase))
             {
                 outputPdfPath = Path.ChangeExtension(outputPdfPath, ".pdf");
             }
 
             // Get all image files and sort them naturally
-            string[] supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
+            // *** MODIFIED: Added ".webp" to the list of supported extensions. ***
+            string[] supportedExtensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff", ".webp" };
             var imageFiles = Directory.GetFiles(imageFolderPath)
                                       .Where(f => supportedExtensions.Contains(Path.GetExtension(f).ToLower()))
-                                      .OrderBy(f => f, new NaturalStringComparer()) // Use the natural sorter
+                                      .OrderBy(f => f, new NaturalStringComparer())
                                       .ToArray();
 
             if (imageFiles.Length == 0)
@@ -95,7 +94,6 @@ namespace Image2Pdf
 
             try
             {
-                // Create the PDF document
                 string outputDirectory = Path.GetDirectoryName(outputPdfPath);
                 if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
                 {
@@ -111,7 +109,8 @@ namespace Image2Pdf
                     {
                         try
                         {
-                            using (XImage image = XImage.FromFile(imageFile))
+                            // *** MODIFIED: Use the new helper function to handle all image types, including WebP. ***
+                            using (XImage image = LoadImage(imageFile))
                             {
                                 // Add a new page for each image
                                 PdfPage page = document.AddPage();
@@ -130,7 +129,6 @@ namespace Image2Pdf
                         }
                     }
 
-                    // Save the PDF file
                     document.Save(outputPdfPath);
                 }
 
@@ -146,37 +144,58 @@ namespace Image2Pdf
         }
 
         /// <summary>
+        /// Loads an image from a file path. Handles .webp by converting it to a PNG memory stream.
+        /// Handles other formats by loading them directly.
+        /// </summary>
+        /// <param name="path">The full path to the image file.</param>
+        /// <returns>An XImage object that can be used by PdfSharp.</returns>
+        private static XImage LoadImage(string path)
+        {
+            if (Path.GetExtension(path).ToLower() == ".webp")
+            {
+                // Use SkiaSharp to decode the WebP image
+                using (SKBitmap skBitmap = SKBitmap.Decode(path))
+                {
+                    // Convert the SkiaSharp bitmap to a PNG in memory
+                    using (MemoryStream memoryStream = new MemoryStream())
+                    {
+                        skBitmap.Encode(memoryStream, SKEncodedImageFormat.Png, 100);
+                        // Reset stream position to the beginning
+                        memoryStream.Position = 0;
+                        // Create XImage from the memory stream
+                        return XImage.FromStream(memoryStream);
+                    }
+                }
+            }
+            else
+            {
+                // For all other supported formats, use the direct method
+                return XImage.FromFile(path);
+            }
+        }
+
+        /// <summary>
         /// Generates a unique file path by appending a number if the file already exists.
         /// e.g., output.pdf -> output (1).pdf -> output (2).pdf
         /// </summary>
-        /// <param name="directory">The directory where the file will be saved.</param>
-        /// <param name="baseName">The initial name of the file without extension.</param>
-        /// <param name="extension">The file extension (e.g., ".pdf").</param>
-        /// <returns>A unique, non-existent full file path.</returns>
         private static string GetUniquePdfPath(string directory, string baseName, string extension)
         {
             string filePath = Path.Combine(directory, baseName + extension);
 
-            // If the original path doesn't exist, we can use it.
             if (!File.Exists(filePath))
             {
                 return filePath;
             }
 
-            // If it exists, start a counter to find the next available name.
             int counter = 1;
             while (true)
             {
                 string newFileName = $"{baseName} ({counter}){extension}";
                 filePath = Path.Combine(directory, newFileName);
-
                 if (!File.Exists(filePath))
                 {
-                    // We found a name that doesn't exist, return it.
                     return filePath;
                 }
-
-                // This name is also taken, increment and try again in the next loop.
                 counter++;
             }
         }
